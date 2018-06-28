@@ -5,12 +5,9 @@
  */
 package br.com.phdev.faciltransferencia.gui;
 
-import br.com.phdev.faciltransferencia.connetion.OnClientFoundListener;
-import br.com.phdev.faciltransferencia.connetion.OnConnectedListener;
-import br.com.phdev.faciltransferencia.misc.Archive;
-import br.com.phdev.faciltransferencia.misc.FTClient;
-import br.com.phdev.faciltransferencia.misc.OnSendComplete;
-import br.com.phdev.faciltransferencia.misc.TransferManager;
+import br.com.phdev.faciltransferencia.connetion.intefaces.Connection;
+import br.com.phdev.faciltransferencia.transfer.Archive;
+import br.com.phdev.faciltransferencia.managers.TransferManager;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -50,12 +47,13 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import br.com.phdev.faciltransferencia.trasnfer.interfaces.TransferStatusListener;
 
 /**
  *
  * @author Paulo Henrique Gonçalves Bacelar
  */
-public class FTGui extends JFrame implements OnConnectedListener, OnSendComplete {
+public class FTGui extends JFrame implements Connection.OnClientConnectionTCPStatusListener, TransferStatusListener {
 
     private JMenuBar menu_bar;
     private JMenu menu_ft;
@@ -157,13 +155,23 @@ public class FTGui extends JFrame implements OnConnectedListener, OnSendComplete
     }
 
     @Override
-    public void onConnected(String alias) {
+    public void onDisconnect() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void onConnect(String alias) {
         this.clients.add(alias);
         updateClientList();
     }
 
     @Override
-    public void onComplete() {
+    public void onSending() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void onSendComplete() {
         Archive[] tmp = new Archive[this.files.size()];
         for (int i = 0; i < tmp.length; i++) {
             tmp[i] = this.files.get(i);
@@ -257,7 +265,7 @@ public class FTGui extends JFrame implements OnConnectedListener, OnSendComplete
                                 tmp[i] = FTGui.this.files.get(i);
                             }
                             FTGui.this.list_files.setListData(tmp);
-                            */
+                             */
 
                             FTGui.this.transferManager.addArchiveForTransfer(archive);
                         }

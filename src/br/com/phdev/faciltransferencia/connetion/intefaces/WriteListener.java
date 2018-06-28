@@ -3,14 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package br.com.phdev.faciltransferencia.connetion;
+package br.com.phdev.faciltransferencia.connetion.intefaces;
 
 /**
  *
  * @author Paulo Henrique Gonçalves Bacelar
  */
-public interface OnReadListener {
+public interface WriteListener {
     
-    void onRead(byte[] buffer, int bufferSize);
+    void write(byte[] bytes);
     
 }

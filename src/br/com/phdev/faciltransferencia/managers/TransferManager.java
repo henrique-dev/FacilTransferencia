@@ -3,12 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package br.com.phdev.faciltransferencia.misc;
+package br.com.phdev.faciltransferencia.managers;
 
-import br.com.phdev.faciltransferencia.connetion.ConnectionManager;
-import br.com.phdev.faciltransferencia.connetion.OnReadListener;
-import br.com.phdev.faciltransferencia.connetion.WriteListener;
+import br.com.phdev.faciltransferencia.connetion.intefaces.WriteListener;
 import br.com.phdev.faciltransferencia.gui.FTGui;
+import br.com.phdev.faciltransferencia.transfer.Archive;
+import br.com.phdev.faciltransferencia.transfer.SizeInfo;
+import br.com.phdev.faciltransferencia.trasnfer.interfaces.OnMessageReceivedListener;
+import br.com.phdev.faciltransferencia.trasnfer.interfaces.TransferStatusListener;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -18,28 +20,26 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
-import java.io.StreamCorruptedException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
  * @author Paulo Henrique Gonçalves Bacelar
  */
-public class TransferManager extends Thread implements OnReadListener {
+public class TransferManager extends Thread implements OnMessageReceivedListener {
 
-    private ConnectionManager connectionManager;
-    private LinkedList<Archive> archives;
-    private OnSendComplete app;
+    private final ConnectionManager connectionManager;
+    private final LinkedList<Archive> archives;
+    private final TransferStatusListener transferStatusListener;
 
     private boolean cantSend = false;
     private boolean waitingClient = true;
 
-    public TransferManager(FTGui app) {
-        this.app = app;
-        this.connectionManager = new ConnectionManager(app, this);
+    public TransferManager(FTGui context) {
+        this.transferStatusListener = (TransferStatusListener) context;
+        this.connectionManager = new ConnectionManager(context, this);
+        this.connectionManager.startBroadcastServer();
         this.archives = new LinkedList<>();
     }
 
@@ -82,9 +82,7 @@ public class TransferManager extends Thread implements OnReadListener {
                 archive.setBytes(getBytesFromFile(file));
                 List<WriteListener> clientsToWrite = this.connectionManager.getWriteListeners();
                 byte[] bytesToSend = getBytesFromObject(archive);
-                //System.out.println("Tamanho do arquivo a ser enviado: " + sizeObject);
                 for (WriteListener wl : clientsToWrite) {
-                    //String msg = "<bs>" + bytesToSend.length + "</bs>";
                     wl.write(getBytesFromObject(new SizeInfo(bytesToSend.length)));
                     setWaitingClient(true);
                     System.out.println("Esperando confirmação do cliente para enviar!");
@@ -94,57 +92,35 @@ public class TransferManager extends Thread implements OnReadListener {
                     System.out.println("Tamanho do buffer a ser enviado: " + bytesToSend.length);
                     wl.write(bytesToSend);
                     setCantSend(true);
-                    //break;                    
                 }
                 System.out.println("Esperando cliente receber e salvar o arquivo!");
                 while (isCantSend()) {
                 }
                 archive.setStatusTranfer(2);
-                app.onComplete();
+                transferStatusListener.onSendComplete();
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-    }
+    }    
 
     @Override
-    public void onRead(byte[] buffer, int bufferSize) {
-        String msg = (String) getObjectFromBytes(buffer, bufferSize);
-        switch (msg) {
-            case "cango":
-                setCantSend(false);
-                break;
-            case "sm":
-                setWaitingClient(false);
-                break;
-        }
-        System.out.println("Mensagem recebida: " + msg);
-    }
-
-    public static Object getObjectFromBytes(byte[] buffer, int bufferSize) {
-        ByteArrayInputStream bais = new ByteArrayInputStream(buffer, 0, bufferSize);
-        ObjectInput in = null;
-        Object obj = null;
-
-        try {
-            in = new ObjectInputStream(bais);
-            obj = in.readObject();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-                bais.close();
-            } catch (Exception e) {
+    public void onMessageReceived(Object msg) {
+        if (msg instanceof String) {
+            switch ((String)msg) {
+                case "cango":
+                    setCantSend(false);
+                    break;
+                case "sm":
+                    setWaitingClient(false);
+                    break;
+                default:
+                    System.out.println("Mensagem desconhecida");
+                    break;
             }
         }
-        return obj;
-    }
+    }    
 
     public static byte[] getBytesFromObject(Object obj) {
         if (obj == null) {

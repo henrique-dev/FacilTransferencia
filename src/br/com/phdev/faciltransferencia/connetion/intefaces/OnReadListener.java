@@ -3,12 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package br.com.phdev.faciltransferencia.teste;
+package br.com.phdev.faciltransferencia.connetion.intefaces;
 
 /**
  *
  * @author Paulo Henrique Gonçalves Bacelar
  */
-interface OnFailedConnection {
+public interface OnReadListener {
+    
+    void onRead(byte[] buffer, int bufferSize);
     
 }

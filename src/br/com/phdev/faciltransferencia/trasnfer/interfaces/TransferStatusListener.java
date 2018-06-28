@@ -3,14 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package br.com.phdev.faciltransferencia.connetion;
+package br.com.phdev.faciltransferencia.trasnfer.interfaces;
 
 /**
  *
  * @author Paulo Henrique Gonçalves Bacelar
  */
-public interface OnConnectedListener {
+public interface TransferStatusListener {
     
-    void onConnected(String alias);
+    void onSending();
+    void onSendComplete();
     
 }

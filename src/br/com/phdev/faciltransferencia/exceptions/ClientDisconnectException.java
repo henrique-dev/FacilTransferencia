@@ -3,14 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package br.com.phdev.faciltransferencia.misc;
+package br.com.phdev.faciltransferencia.exceptions;
 
 /**
  *
  * @author Paulo Henrique Gonçalves Bacelar
  */
-public interface OnSendComplete {
-    
-    void onComplete();
+public class ClientDisconnectException {
     
 }

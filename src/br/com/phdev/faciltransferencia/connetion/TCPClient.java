@@ -5,6 +5,9 @@
  */
 package br.com.phdev.faciltransferencia.connetion;
 
+import br.com.phdev.faciltransferencia.connetion.intefaces.Connection;
+import br.com.phdev.faciltransferencia.connetion.intefaces.OnReadListener;
+import br.com.phdev.faciltransferencia.connetion.intefaces.WriteListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -18,7 +21,7 @@ import java.net.Socket;
 public class TCPClient extends Thread implements WriteListener {
 
     private final int SERVER_TRANSFER_PORT = 10011;
-    
+
     private String alias;
     private InetAddress address;
     private Socket clientTcpSocket;
@@ -26,15 +29,15 @@ public class TCPClient extends Thread implements WriteListener {
     private InputStream inputStream;
     private byte[] bytes;
     private OnReadListener readListener;
-    private OnConnectedListener connectedListener;    
+    private Connection.OnClientConnectionTCPStatusListener onClientConnectionTCPStatusListener;
 
     public TCPClient(InetAddress address, String alias) {
-        this.address = address;        
+        this.address = address;
         this.alias = alias;
     }
-    
-    public void setOnConnectedListener(OnConnectedListener connectedListener) {
-        this.connectedListener = connectedListener;
+
+    public void setOnClientConnectionTCPStatusListener(Connection.OnClientConnectionTCPStatusListener onClientConnectionTCPStatusListener) {
+        this.onClientConnectionTCPStatusListener = onClientConnectionTCPStatusListener;
     }
 
     public void setOnReadListener(OnReadListener readListener) {
@@ -48,11 +51,14 @@ public class TCPClient extends Thread implements WriteListener {
     @Override
     public void run() {
         try {
+            
             System.out.println("Tentando contanto com o smartphone via TCP...");
             this.clientTcpSocket = new Socket(this.address.getHostAddress(), SERVER_TRANSFER_PORT);
             System.out.println("Conectado ao smartphone");
-            if (this.connectedListener != null) {
-                this.connectedListener.onConnected(alias);
+            if (this.onClientConnectionTCPStatusListener != null) {
+                this.onClientConnectionTCPStatusListener.onConnect(alias);
+            } else {
+                throw new RuntimeException("onClientConnectionTCPStatusListener não registrado");
             }
 
             this.outputStream = this.clientTcpSocket.getOutputStream();
@@ -85,9 +91,8 @@ public class TCPClient extends Thread implements WriteListener {
     public void write(byte[] bytes) {
         try {
             System.out.println("tamanho do buffer: " + bytes.length);
-            //this.outputStream.write(bytes, 0, bytes.length); 
             this.outputStream.write(bytes);
-            this.outputStream.flush();                        
+            this.outputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
