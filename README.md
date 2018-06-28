@@ -9,9 +9,9 @@ tem como objetivo a transferência de arquivos de um computador para um smartpho
 
 ### Funcionamento
 
-Ambos os dispositivos tem que estar na mesma rede. A versão desktop possui um receptor de boradcast que fica na escuta de mensagens, que são enviadas pela aplicação do smartphone. Por sua vez, o smartphone possui um transmissor de broadcast que envia um determinado número de broadcasts na rede, e simultaneamente abre uma entrada de requisições TCP por 5 segundos. 
+Ambos os dispositivos tem que estar na mesma rede. A versão desktop possui um receptor de broadcast que fica na escuta de mensagens, que são enviadas pela aplicação do smartphone. Por sua vez, o smartphone possui um transmissor de broadcast que envia um determinado número de broadcasts na rede, e simultaneamente abre uma entrada de requisições TCP por 5 segundos. 
 
-Quando o desktop recebe uma mensagem de broadcast, o mesmo envia uma requisição de conexão através do protocolo TCP para o smartphone, e assim que o smartphone aceita, ambas a aplicações ficam pareadas e prontas para transferência de dados.
+Quando o desktop recebe uma mensagem de broadcast, o mesmo envia uma requisição de conexão através do protocolo TCP para o smartphone, e assim que o smartphone aceita, ambas as aplicações ficam pareadas e prontas para transferência de dados.
 
 Desta forma, o conhecimento de ambas na rede é feito automaticamente.
 
