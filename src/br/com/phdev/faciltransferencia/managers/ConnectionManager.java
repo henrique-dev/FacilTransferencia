@@ -13,10 +13,7 @@ import br.com.phdev.faciltransferencia.transfer.FTClient;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+import java.io.ObjectInputStream;;
 import java.util.ArrayList;
 import java.util.List;
 import br.com.phdev.faciltransferencia.trasnfer.interfaces.OnObjectReceivedListener;
@@ -32,30 +29,28 @@ public class ConnectionManager implements OnReadListener, Connection.OnClientCon
     private final Connection.OnClientConnectionTCPStatusListener onClientConnectionTCPStatusListener;
     private final OnObjectReceivedListener onObjectReceivedListener;
 
-    private final List<FTClient> clients;
-    private final List<WriteListener> writeListeners;
+    private final List<FTClient> clients;    
 
-    public ConnectionManager(Connection.OnClientConnectionTCPStatusListener onClientConnectionTCPStatusListener, OnObjectReceivedListener onObjectReceivedListener) {
-        this.clients = new ArrayList<>();
-        this.writeListeners = new ArrayList<>();
-        this.onObjectReceivedListener = onObjectReceivedListener;
-        this.onClientConnectionTCPStatusListener = onClientConnectionTCPStatusListener;
+    public ConnectionManager(TransferManager transferManager) {
+        this.clients = new ArrayList<>();        
+        this.onObjectReceivedListener = transferManager;
+        this.onClientConnectionTCPStatusListener = transferManager;
         this.broadcastServer = new BroadcastServer(this);
+    }
+    
+    public List<FTClient> getClientsList() {
+        return this.clients;
     }
 
     public void startBroadcastServer() {
         this.broadcastServer.start();
     }
-    
+    /*
     public void removeClient() {
         this.clients.get(0).getTcpConnection().close();
         this.clients.clear();
         this.onClientConnectionTCPStatusListener.onDisconnect();
-    }
-
-    public List<FTClient> getClients() {
-        return this.clients;
-    }
+    } */   
 
     @Override
     public void onClientFound(FTClient client) {       
@@ -67,14 +62,9 @@ public class ConnectionManager implements OnReadListener, Connection.OnClientCon
         System.out.println("Cliente adicionado");
         client.getTcpConnection().setOnClientConnectionTCPStatusListener(this.onClientConnectionTCPStatusListener);
         client.getTcpConnection().setOnReadListener(this);
-        client.getTcpConnection().start();
-        this.writeListeners.add(client.getTcpConnection().getWriteListener());
+        client.getTcpConnection().start();        
         this.clients.add(client);
-    }
-
-    public List<WriteListener> getWriteListeners() {
-        return this.writeListeners;
-    }
+    }    
 
     @Override
     public void onRead(byte[] buffer, int bufferSize) {

@@ -83,7 +83,8 @@ public class TCPClient extends Thread implements WriteListener {
                 try {
                     int bytesReaded = inputStream.read(bytes);
                     if (bytesReaded == -1) {
-                        this.onClientConnectionTCPStatusListener.onDisconnect();
+                        this.onClientConnectionTCPStatusListener.onDisconnect(this.alias);                                      
+                        break;
                     }
                     this.readListener.onRead(bytes, bytesReaded);
                 } catch (IOException e) {

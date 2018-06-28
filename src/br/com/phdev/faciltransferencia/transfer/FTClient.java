@@ -6,6 +6,7 @@
 package br.com.phdev.faciltransferencia.transfer;
 
 import br.com.phdev.faciltransferencia.connetion.TCPClient;
+import br.com.phdev.faciltransferencia.connetion.intefaces.WriteListener;
 import java.net.InetAddress;
 
 /**
@@ -16,7 +17,8 @@ public class FTClient {
     
     private final String alias;
     private final InetAddress address;
-    private final TCPClient tcpConnection;    
+    private final TCPClient tcpConnection;   
+    private WriteListener writeListener;
     
     public FTClient(String name, InetAddress address) {
         this.alias = name;
@@ -35,6 +37,10 @@ public class FTClient {
     public TCPClient getTcpConnection() {
         return tcpConnection;
     }   
+
+    public WriteListener getWriteListener() {
+        return tcpConnection.getWriteListener();
+    }         
     
     @Override
     public String toString() {

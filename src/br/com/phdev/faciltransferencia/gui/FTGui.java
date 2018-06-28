@@ -8,6 +8,7 @@ package br.com.phdev.faciltransferencia.gui;
 import br.com.phdev.faciltransferencia.connetion.intefaces.Connection;
 import br.com.phdev.faciltransferencia.transfer.Archive;
 import br.com.phdev.faciltransferencia.managers.TransferManager;
+import br.com.phdev.faciltransferencia.transfer.FTClient;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -61,13 +62,13 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
     private JMenu menu_ft;
     private JMenu menu_help;
 
-    private JList<String> list_clients;
+    private JList<FTClient> list_clients;
     private JScrollPane scroll_list_clients;
 
     private JList<Archive> list_files;
     private JScrollPane scroll_list_files;
 
-    private List<String> clients;
+    private List<FTClient> clients;
     private List<Archive> files;
 
     private TransferManager transferManager;
@@ -86,7 +87,7 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
 
         this.transferManager = new TransferManager(this);
         this.transferManager.start();
-        this.clients = new ArrayList<>();
+        this.clients = this.transferManager.getClientsList();
         this.files = new ArrayList<>();
 
         this.initComponents();
@@ -108,7 +109,7 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
 
         this.list_clients = new JList<>();
         this.list_clients.setFont(new Font("Arial", 0, 20));
-        this.list_clients.setModel(new AbstractListModel<String>() {
+        this.list_clients.setModel(new AbstractListModel<FTClient>() {
 
             @Override
             public int getSize() {
@@ -116,7 +117,7 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
             }
 
             @Override
-            public String getElementAt(int index) {
+            public FTClient getElementAt(int index) {
                 return FTGui.this.clients.get(index);
             }
         });
@@ -154,9 +155,8 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
     }
 
     @Override
-    public void onDisconnect() {
-        this.clients.clear();
-        String[] tmp = new String[this.clients.size()];
+    public void onDisconnect(String alias) {        
+        FTClient[] tmp = new FTClient[this.clients.size()];
         for (int i = 0; i < tmp.length; i++) {
             tmp[i] = this.clients.get(i);
         }
@@ -164,9 +164,8 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
     }
 
     @Override
-    public void onConnect(String alias) {
-        this.clients.add(alias.trim());
-        String[] tmp = new String[this.clients.size()];
+    public void onConnect(String alias) {                
+        FTClient[] tmp = new FTClient[this.clients.size()];
         for (int i = 0; i < tmp.length; i++) {
             tmp[i] = this.clients.get(i);
         }
@@ -271,14 +270,6 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
                             archive.setPath(((File) obj).getPath());
                             FTGui.this.files.add(archive);
                             FTGui.this.list_files.updateUI();
-                            /*
-                            Archive[] tmp = new Archive[FTGui.this.files.size()];
-                            for (int i = 0; i < tmp.length; i++) {
-                                tmp[i] = FTGui.this.files.get(i);
-                            }
-                            FTGui.this.list_files.setListData(tmp);
-                             */
-
                             FTGui.this.transferManager.addArchiveForTransfer(archive);
                         }
                     } catch (Exception e) {

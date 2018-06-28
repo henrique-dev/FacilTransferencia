@@ -46,7 +46,7 @@ public class BroadcastServer extends Thread {
                     canJump = false;
                     continue;
                 }
-                FTClient ftc = new FTClient(clientAlias, address);
+                FTClient ftc = new FTClient(clientAlias.trim(), address);
                 this.onClientConnectionBroadcastStatusListener.onClientFound(ftc);
             }
         } catch (IOException e) {
