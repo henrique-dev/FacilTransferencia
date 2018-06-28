@@ -1,4 +1,4 @@
-#Mim2Mim (m2m)
+# Mim2Mim (m2m)
 
 Este projeto se encontra em atualização
 
@@ -9,6 +9,20 @@ tem como objetivo a transferência de arquivos de um computador para um smartpho
 
 ### Funcionamento
 
+Ambos os dispositivos tem que estar na mesma rede. A versão desktop possui um receptor de boradcast que fica na escuta de mensagens, que são enviadas pela aplicação do smartphone. Por sua vez, o smartphone possui um transmissor de broadcast que envia um determinado número de broadcasts na rede, e simultaneamente abre uma entrada de requisições TCP por 5 segundos. 
+
+Quando o desktop recebe uma mensagem de broadcast, o mesmo envia uma requisição de conexão através do protocolo TCP para o smartphone, e assim que o smartphone aceita, ambas a aplicações ficam pareadas e prontas para transferência de dados.
+
+Desta forma, o conhecimento de ambas na rede é feito automaticamente.
+
+### Uso
+
 Esta é a janela única da aplicação:
 
-![](rd/desktop.png)
+![](/rd/desktop.png)
+
+Na área **Dispositivos conectados** se encontra a lista de smartphones conectados no momento na aplicação (por enquanto só é possível a transferência a somente um dispositivo, por mais que possam haver mais conectados).
+
+Na área **Arquivos** se encontra a lista de arquivos a serem transferidos ou que já foram transferidos (o status é transcrito no mesmo na lista).
+
+E por fim, na área **Arraste os arquivos para cá** é onde se deve soltar os arquivos arrastados com o mouse. Os arquivos são adicionados automaticamente para transferência.
