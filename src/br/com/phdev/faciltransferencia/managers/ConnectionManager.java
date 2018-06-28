@@ -46,6 +46,12 @@ public class ConnectionManager implements OnReadListener, Connection.OnClientCon
     public void startBroadcastServer() {
         this.broadcastServer.start();
     }
+    
+    public void removeClient() {
+        this.clients.get(0).getTcpConnection().close();
+        this.clients.clear();
+        this.onClientConnectionTCPStatusListener.onDisconnect();
+    }
 
     public List<FTClient> getClients() {
         return this.clients;
@@ -71,11 +77,11 @@ public class ConnectionManager implements OnReadListener, Connection.OnClientCon
     }
 
     @Override
-    public void onRead(byte[] buffer, int bufferSize) {        
+    public void onRead(byte[] buffer, int bufferSize) {
         this.onObjectReceivedListener.onObjectReceived(getObjectFromBytes(buffer, bufferSize));
     }
 
-    public Object getObjectFromBytes(byte[] buffer, int bufferSize) {
+    public Object getObjectFromBytes(byte[] buffer, int bufferSize){
         ByteArrayInputStream bais = new ByteArrayInputStream(buffer, 0, bufferSize);
         ObjectInput in = null;
         Object obj = null;

@@ -48,10 +48,23 @@ public class TCPClient extends Thread implements WriteListener {
         return this;
     }
 
+    public void close() {
+        try {
+            this.clientTcpSocket.close();
+            this.outputStream.close();
+            this.inputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            this.onClientConnectionTCPStatusListener = null;
+            this.readListener = null;
+        }
+    }
+
     @Override
     public void run() {
         try {
-            
+
             System.out.println("Tentando contanto com o smartphone via TCP...");
             this.clientTcpSocket = new Socket(this.address.getHostAddress(), SERVER_TRANSFER_PORT);
             System.out.println("Conectado ao smartphone");
@@ -69,6 +82,9 @@ public class TCPClient extends Thread implements WriteListener {
             while (true) {
                 try {
                     int bytesReaded = inputStream.read(bytes);
+                    if (bytesReaded == -1) {
+                        this.onClientConnectionTCPStatusListener.onDisconnect();
+                    }
                     this.readListener.onRead(bytes, bytesReaded);
                 } catch (IOException e) {
                     e.printStackTrace();

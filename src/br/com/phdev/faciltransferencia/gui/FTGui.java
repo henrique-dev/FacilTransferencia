@@ -48,6 +48,8 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import br.com.phdev.faciltransferencia.trasnfer.interfaces.TransferStatusListener;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.TitledBorder;
 
 /**
  *
@@ -75,7 +77,7 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
         super.setDefaultCloseOperation(EXIT_ON_CLOSE);
         super.setResizable(false);
         super.setAlwaysOnTop(true);
-        super.setSize(600, 600);
+        super.setSize(800, 600);
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
@@ -101,11 +103,25 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
         super.setJMenuBar(menu_bar);
 
         JPanel panel_clients = new JPanel();
+        panel_clients.setBorder(new TitledBorder("Dispositivos conectados"));
         panel_clients.setLayout(new BorderLayout(5, 5));
-        panel_clients.add(new JLabel("Dispositivos conectados: "), BorderLayout.PAGE_START);
 
         this.list_clients = new JList<>();
-        updateClientList();
+        this.list_clients.setFont(new Font("Arial", 0, 20));
+        this.list_clients.setModel(new AbstractListModel<String>() {
+
+            @Override
+            public int getSize() {
+                return FTGui.this.clients.size();
+            }
+
+            @Override
+            public String getElementAt(int index) {
+                return FTGui.this.clients.get(index);
+            }
+        });
+        this.scroll_list_clients = new JScrollPane();
+        this.scroll_list_clients.setViewportView(this.list_clients);
 
         panel_clients.add(this.scroll_list_clients, BorderLayout.CENTER);
         super.add(panel_clients, BorderLayout.LINE_START);
@@ -126,43 +142,35 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
         this.scroll_list_files.setViewportView(this.list_files);
 
         JPanel files_panel = new JPanel();
+        files_panel.setBorder(new TitledBorder("Arquivos"));
         files_panel.setLayout(new GridLayout(2, 1));
         files_panel.add(this.scroll_list_files);
         files_panel.add(new DropPane());
         super.add(files_panel, BorderLayout.CENTER);
     }
 
-    private void updateClientList() {
-        this.list_clients.setModel(new AbstractListModel<String>() {
-
-            @Override
-            public int getSize() {
-                return FTGui.this.clients.size();
-            }
-
-            @Override
-            public String getElementAt(int index) {
-                return FTGui.this.clients.get(index);
-            }
-        });
-        this.scroll_list_clients = new JScrollPane();
-        this.scroll_list_clients.setViewportView(this.list_clients);
-    }
-
     public static void main(String[] args) {
-        new FTGui();
-        //new TransferManager(new FTGui()).start();
+        new FTGui();        
     }
 
     @Override
     public void onDisconnect() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        this.clients.clear();
+        String[] tmp = new String[this.clients.size()];
+        for (int i = 0; i < tmp.length; i++) {
+            tmp[i] = this.clients.get(i);
+        }
+        this.list_clients.setListData(tmp);
     }
 
     @Override
     public void onConnect(String alias) {
-        this.clients.add(alias);
-        updateClientList();
+        this.clients.add(alias.trim());
+        String[] tmp = new String[this.clients.size()];
+        for (int i = 0; i < tmp.length; i++) {
+            tmp[i] = this.clients.get(i);
+        }
+        this.list_clients.setListData(tmp);
     }
 
     @Override

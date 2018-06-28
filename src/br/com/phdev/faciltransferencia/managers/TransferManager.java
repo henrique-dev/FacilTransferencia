@@ -22,6 +22,7 @@ import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import br.com.phdev.faciltransferencia.trasnfer.interfaces.OnObjectReceivedListener;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -128,6 +129,10 @@ public class TransferManager extends Thread implements OnObjectReceivedListener 
 
     @Override
     public void onObjectReceived(Object msg) {
+        if (msg == null) {
+            System.out.println("Mensagem vazia recebida. Removendo cliente");
+            this.connectionManager.removeClient();
+        }
         if (msg instanceof String) {
             switch ((String) msg) {
                 case "cango":
