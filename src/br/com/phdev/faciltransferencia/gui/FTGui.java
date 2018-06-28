@@ -167,7 +167,11 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
 
     @Override
     public void onSending() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Archive[] tmp = new Archive[this.files.size()];
+        for (int i = 0; i < tmp.length; i++) {
+            tmp[i] = this.files.get(i);
+        }
+        this.list_files.setListData(tmp);
     }
 
     @Override

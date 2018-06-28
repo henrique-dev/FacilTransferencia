@@ -47,54 +47,75 @@ public class TransferManager extends Thread implements OnMessageReceivedListener
         return this.archives;
     }
 
-    public void addArchiveForTransfer(Archive archive) {
+    synchronized public void addArchiveForTransfer(Archive archive) {        
+        notify();
         getList().add(archive);
     }
 
-    public Archive getArchiveToTransfer() {
-        while (getList().isEmpty()) {
+    synchronized public Archive getArchiveToTransfer() {
+        if (getList().isEmpty()) {
+            try {
+                wait();                
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
+        //while (getList().isEmpty()) {
+        //}
         return getList().pop();
     }
 
-    synchronized boolean isWaitingClient() {
-        return this.waitingClient;
+    synchronized void clientReady() {
+        notify();
     }
 
     synchronized void setWaitingClient(boolean waitingClient) {
         this.waitingClient = waitingClient;
+        try {
+            wait();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    synchronized void canSend() {
+        notify();
     }
 
-    synchronized private void setCantSend(boolean cantSend) {
+    synchronized private void setCantSend(boolean cantSend) {        
         this.cantSend = cantSend;
-    }
-
-    synchronized boolean isCantSend() {
-        return this.cantSend;
-    }
+        try {
+            wait();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }    
 
     @Override
     public void run() {
         while (true) {
             try {
-                Archive archive = getArchiveToTransfer();
+                Archive archive = this.getArchiveToTransfer();
                 File file = new File(archive.getPath());
                 archive.setBytes(getBytesFromFile(file));
                 List<WriteListener> clientsToWrite = this.connectionManager.getWriteListeners();
                 byte[] bytesToSend = getBytesFromObject(archive);
                 for (WriteListener wl : clientsToWrite) {
                     wl.write(getBytesFromObject(new SizeInfo(bytesToSend.length)));
-                    setWaitingClient(true);
                     System.out.println("Esperando confirmação do cliente para enviar!");
-                    while (isWaitingClient()) {
-                    }
+                    this.setWaitingClient(true);
+                    //while (isWaitingClient()) {
+                    //}
                     sleep(500);
-                    System.out.println("Tamanho do buffer a ser enviado: " + bytesToSend.length);
-                    wl.write(bytesToSend);
-                    setCantSend(true);
-                }
-                System.out.println("Esperando cliente receber e salvar o arquivo!");
-                while (isCantSend()) {
+                    System.out.println("Tamanho do buffer/arquivo a ser enviado: " + bytesToSend.length);
+                    wl.write(bytesToSend);                    
+                    System.out.println("Enviando o arquivo");
+                    archive.setStatusTranfer(1);
+                    transferStatusListener.onSending();
+                    System.out.println("Esperando cliente receber e salvar o arquivo!");
+                    this.setCantSend(true);
+                    //while (isCantSend()) {
+                    //}
                 }
                 archive.setStatusTranfer(2);
                 transferStatusListener.onSendComplete();
@@ -103,24 +124,24 @@ public class TransferManager extends Thread implements OnMessageReceivedListener
                 e.printStackTrace();
             }
         }
-    }    
+    }
 
     @Override
     public void onMessageReceived(Object msg) {
         if (msg instanceof String) {
-            switch ((String)msg) {
+            switch ((String) msg) {
                 case "cango":
-                    setCantSend(false);
+                    this.canSend();
                     break;
                 case "sm":
-                    setWaitingClient(false);
+                    clientReady();
                     break;
                 default:
                     System.out.println("Mensagem desconhecida");
                     break;
             }
         }
-    }    
+    }
 
     public static byte[] getBytesFromObject(Object obj) {
         if (obj == null) {
