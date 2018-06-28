@@ -9,7 +9,6 @@ import br.com.phdev.faciltransferencia.connetion.intefaces.WriteListener;
 import br.com.phdev.faciltransferencia.gui.FTGui;
 import br.com.phdev.faciltransferencia.transfer.Archive;
 import br.com.phdev.faciltransferencia.transfer.SizeInfo;
-import br.com.phdev.faciltransferencia.trasnfer.interfaces.OnMessageReceivedListener;
 import br.com.phdev.faciltransferencia.trasnfer.interfaces.TransferStatusListener;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -22,12 +21,13 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.List;
+import br.com.phdev.faciltransferencia.trasnfer.interfaces.OnObjectReceivedListener;
 
 /**
  *
  * @author Paulo Henrique Gonçalves Bacelar
  */
-public class TransferManager extends Thread implements OnMessageReceivedListener {
+public class TransferManager extends Thread implements OnObjectReceivedListener {
 
     private final ConnectionManager connectionManager;
     private final LinkedList<Archive> archives;
@@ -127,7 +127,7 @@ public class TransferManager extends Thread implements OnMessageReceivedListener
     }
 
     @Override
-    public void onMessageReceived(Object msg) {
+    public void onObjectReceived(Object msg) {
         if (msg instanceof String) {
             switch ((String) msg) {
                 case "cango":

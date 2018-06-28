@@ -9,8 +9,8 @@ package br.com.phdev.faciltransferencia.trasnfer.interfaces;
  *
  * @author Paulo Henrique Gonçalves Bacelar
  */
-public interface OnMessageReceivedListener {
+public interface OnObjectReceivedListener {
     
-    void onMessageReceived(Object msg);
+    void onObjectReceived(Object obj);
     
 }

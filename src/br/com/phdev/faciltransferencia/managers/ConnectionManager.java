@@ -10,7 +10,6 @@ import br.com.phdev.faciltransferencia.connetion.intefaces.Connection;
 import br.com.phdev.faciltransferencia.connetion.intefaces.OnReadListener;
 import br.com.phdev.faciltransferencia.connetion.intefaces.WriteListener;
 import br.com.phdev.faciltransferencia.transfer.FTClient;
-import br.com.phdev.faciltransferencia.trasnfer.interfaces.OnMessageReceivedListener;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -20,6 +19,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
+import br.com.phdev.faciltransferencia.trasnfer.interfaces.OnObjectReceivedListener;
 
 /**
  *
@@ -27,18 +27,18 @@ import java.util.List;
  */
 public class ConnectionManager implements OnReadListener, Connection.OnClientConnectionBroadcastStatusListener {
 
-    private BroadcastServer broadcastServer;
+    private final BroadcastServer broadcastServer;
 
-    private Connection.OnClientConnectionTCPStatusListener onClientConnectionTCPStatusListener;
-    private OnMessageReceivedListener onMessageReceivedListener;
+    private final Connection.OnClientConnectionTCPStatusListener onClientConnectionTCPStatusListener;
+    private final OnObjectReceivedListener onObjectReceivedListener;
 
-    private List<FTClient> clients;
-    private List<WriteListener> writeListeners;
+    private final List<FTClient> clients;
+    private final List<WriteListener> writeListeners;
 
-    public ConnectionManager(Connection.OnClientConnectionTCPStatusListener onClientConnectionTCPStatusListener, OnMessageReceivedListener onMessageReceivedListener) {
+    public ConnectionManager(Connection.OnClientConnectionTCPStatusListener onClientConnectionTCPStatusListener, OnObjectReceivedListener onObjectReceivedListener) {
         this.clients = new ArrayList<>();
         this.writeListeners = new ArrayList<>();
-        this.onMessageReceivedListener = onMessageReceivedListener;
+        this.onObjectReceivedListener = onObjectReceivedListener;
         this.onClientConnectionTCPStatusListener = onClientConnectionTCPStatusListener;
         this.broadcastServer = new BroadcastServer(this);
     }
@@ -72,7 +72,7 @@ public class ConnectionManager implements OnReadListener, Connection.OnClientCon
 
     @Override
     public void onRead(byte[] buffer, int bufferSize) {        
-        this.onMessageReceivedListener.onMessageReceived(getObjectFromBytes(buffer, bufferSize));
+        this.onObjectReceivedListener.onObjectReceived(getObjectFromBytes(buffer, bufferSize));
     }
 
     public Object getObjectFromBytes(byte[] buffer, int bufferSize) {
