@@ -49,6 +49,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import br.com.phdev.faciltransferencia.trasnfer.interfaces.TransferStatusListener;
+import java.awt.FlowLayout;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.TitledBorder;
 
@@ -83,7 +84,8 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
         }
-        super.setLayout(new BorderLayout(5, 5));
+        //super.setLayout(new BorderLayout(5, 5));
+        super.setLayout(new GridLayout(1, 2));
 
         this.transferManager = new TransferManager(this);
         this.transferManager.start();
@@ -104,11 +106,12 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
         super.setJMenuBar(menu_bar);
 
         JPanel panel_clients = new JPanel();
-        panel_clients.setBorder(new TitledBorder("Dispositivos conectados"));
+        panel_clients.setBorder(new TitledBorder("Arquivos"));
         panel_clients.setLayout(new BorderLayout(5, 5));
 
         this.list_clients = new JList<>();
         this.list_clients.setFont(new Font("Arial", 0, 20));
+        this.list_clients.setMinimumSize(new Dimension(400, 300));
         this.list_clients.setModel(new AbstractListModel<FTClient>() {
 
             @Override
@@ -121,11 +124,8 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
                 return FTGui.this.clients.get(index);
             }
         });
-        this.scroll_list_clients = new JScrollPane();
+        this.scroll_list_clients = new JScrollPane();       
         this.scroll_list_clients.setViewportView(this.list_clients);
-
-        panel_clients.add(this.scroll_list_clients, BorderLayout.CENTER);
-        super.add(panel_clients, BorderLayout.LINE_START);
 
         this.list_files = new JList<>();
         this.list_files.setModel(new AbstractListModel<Archive>() {
@@ -142,12 +142,16 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
         this.scroll_list_files = new JScrollPane();
         this.scroll_list_files.setViewportView(this.list_files);
 
-        JPanel files_panel = new JPanel();
-        files_panel.setBorder(new TitledBorder("Arquivos"));
-        files_panel.setLayout(new GridLayout(2, 1));
-        files_panel.add(this.scroll_list_files);
-        files_panel.add(new DropPane());
-        super.add(files_panel, BorderLayout.CENTER);
+        JPanel panel_files = new JPanel();
+        panel_files.setBorder(new TitledBorder("Dispositivos conectados"));
+        panel_files.setLayout(new GridLayout(2, 1));
+        
+        panel_files.add(this.scroll_list_clients);
+        panel_files.add(new DropPane());        
+        panel_clients.add(this.scroll_list_files, BorderLayout.CENTER);        
+        
+        super.add(panel_files);
+        super.add(panel_clients);                
     }
 
     public static void main(String[] args) {

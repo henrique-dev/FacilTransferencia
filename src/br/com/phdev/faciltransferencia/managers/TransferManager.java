@@ -152,6 +152,7 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
                 }
                 archive.setStatusTranfer(2);
                 transferStatusListener.onSendComplete();
+                archive.setBytes(null);
 
             } catch (Exception e) {
                 e.printStackTrace();
