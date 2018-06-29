@@ -75,7 +75,7 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
     private TransferManager transferManager;
 
     public FTGui() {
-        super("Facil Transferencia");
+        super("Mim2Mim - Desktop");
         super.setDefaultCloseOperation(EXIT_ON_CLOSE);
         super.setResizable(false);
         super.setAlwaysOnTop(true);
