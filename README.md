@@ -8,7 +8,7 @@ Para baixar o último lançamento da aplicação, [clique aqui](https://github.c
 
 Não possui instalador, é só baixar e executar.
 
-Obs.: Seu computador deve possuir o java instalado.
+Obs.: Seu computador deve possuir o [java](https://java.com/pt_BR/download/) instalado.
 
 ### Descrição
 
