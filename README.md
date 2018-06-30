@@ -10,6 +10,17 @@ Não possui instalador, é só baixar e executar.
 
 Obs.: Seu computador deve possuir o [java](https://java.com/pt_BR/download/) instalado.
 
+### Funções atuais
+- [X] Transferência de arquivos para o smartphone.
+- [X] Pareamento automático entre smartphone e computador.
+- [X] Tamanho máximo do arquivo para envio: 30Mb.
+
+### Proximas funções
+- [ ] Recebimento de arquivos do smartphone.
+- [ ] Pareamente manual entre smartphone e computador.
+- [ ] Aumento do tamanho máximo de envio e recebimento de arquivos para 200Mb.
+- [ ] Transferência a mais de um dispositivo.
+
 ### Descrição
 
 Esta aplicação funciona em par com [m2m-Mobile](https://github.com/henrique-dev/m2m-Mobile). Essa versão é a desktop e
