@@ -1,4 +1,4 @@
-# Mim2Mim (m2m)
+# Mim2Mim - Desktop (m2m)
 
 Este projeto se encontra em atualização
 
