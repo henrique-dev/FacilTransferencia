@@ -2,6 +2,14 @@
 
 Este projeto se encontra em atualização
 
+### Download
+
+Para baixar o último lançamento da aplicação, [clique aqui](https://github.com/henrique-dev/m2m-Desktop/raw/master/dist/FacilTransferencia.jar).
+
+Não possui instalador, é só baixar e executar.
+
+Obs.: Seu computador deve possuir o java instalado.
+
 ### Descrição
 
 Esta aplicação funciona em par com [m2m-Mobile](https://github.com/henrique-dev/m2m-Mobile). Essa versão é a desktop e
