@@ -50,6 +50,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import br.com.phdev.faciltransferencia.trasnfer.interfaces.TransferStatusListener;
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.JMenuItem;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.TitledBorder;
 
@@ -83,8 +86,7 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
-        }
-        //super.setLayout(new BorderLayout(5, 5));
+        }       
         super.setLayout(new GridLayout(1, 2));
 
         this.transferManager = new TransferManager(this);
@@ -98,12 +100,13 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
     }
 
     private void initComponents() {
-        this.menu_bar = new JMenuBar();
-        this.menu_ft = new JMenu("FT");
+        this.menu_bar = new JMenuBar();        
+        this.menu_ft = new JMenu("Mim2Mim");                        
+        this.menu_help = new JMenu("Ajuda");                               
         this.menu_bar.add(this.menu_ft);
-        this.menu_help = new JMenu("Ajuda");
         this.menu_bar.add(this.menu_help);
-        super.setJMenuBar(menu_bar);
+                
+        super.setJMenuBar(this.menu_bar);        
 
         JPanel panel_clients = new JPanel();
         panel_clients.setBorder(new TitledBorder("Arquivos"));
