@@ -106,9 +106,18 @@ public class TCPClient extends Thread implements WriteListener {
 
     @Override
     public void write(byte[] bytes) {
-        try {
-            System.out.println("tamanho do buffer: " + bytes.length);
+        try {            
             this.outputStream.write(bytes);
+            this.outputStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    @Override
+    public void write(byte[] bytes, int off, int length) {
+        try {            
+            this.outputStream.write(bytes, off, length);
             this.outputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();

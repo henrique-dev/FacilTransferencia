@@ -17,6 +17,7 @@ public class ArchiveInfo implements Serializable{
     private long archiveLength;
     private int fragmentsAmount;
     private int fragmentLength;
+    private int lastFragmentLength;
 
     public String getArchiveName() {
         return archiveName;
@@ -49,5 +50,13 @@ public class ArchiveInfo implements Serializable{
     public void setFragmentLength(int fragmentLength) {
         this.fragmentLength = fragmentLength;
     }
+
+    public int getLastFragmentLength() {
+        return lastFragmentLength;
+    }
+
+    public void setLastFragmentLength(int lastFragmentLength) {
+        this.lastFragmentLength = lastFragmentLength;
+    }        
             
 }

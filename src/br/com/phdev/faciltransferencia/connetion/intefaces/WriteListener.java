@@ -12,5 +12,6 @@ package br.com.phdev.faciltransferencia.connetion.intefaces;
 public interface WriteListener {
     
     void write(byte[] bytes);
+    void write(byte[] bytes, int off, int length);
     
 }

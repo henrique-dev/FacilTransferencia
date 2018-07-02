@@ -24,6 +24,7 @@ import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import br.com.phdev.faciltransferencia.trasnfer.interfaces.OnObjectReceivedListener;
+import java.nio.channels.FileChannel;
 import javax.swing.JOptionPane;
 
 /**
@@ -31,6 +32,8 @@ import javax.swing.JOptionPane;
  * @author Paulo Henrique Gonçalves Bacelar
  */
 public class TransferManager extends Thread implements OnObjectReceivedListener, Connection.OnClientConnectionTCPStatusListener {
+
+    private final int MAX_FILE_LENGTH_TO_SEND_WITHOUT_FRAGMENT = 10485760;
 
     private final ConnectionManager connectionManager;
     private final LinkedList<Archive> archives;
@@ -40,6 +43,7 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
 
     private boolean waitingClientConfirmToSend = false;
     private boolean waitingClientReceiveAll = false;
+    private boolean waitingClientReceiveFragment = false;
     private boolean noFilesToSend = false;
 
     public TransferManager(FTGui context) {
@@ -85,9 +89,17 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
 
     public synchronized void setNoFilesToSend(boolean noFilesToSend) {
         this.noFilesToSend = noFilesToSend;
-    }        
+    }
 
-    private synchronized Archive getArchiveToTransfer() {        
+    public synchronized boolean isWaitingClientReceiveFragment() {
+        return waitingClientReceiveFragment;
+    }
+
+    public synchronized void setWaitingClientReceiveFragment(boolean waitingClientReceiveFragment) {
+        this.waitingClientReceiveFragment = waitingClientReceiveFragment;
+    }
+
+    private synchronized Archive getArchiveToTransfer() {
         if (getArchivesList().isEmpty()) {
             try {
                 wait();
@@ -100,7 +112,7 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
 
     @Override
     public void onDisconnect(String alias) {
-        System.out.println("Desconectou");        
+        System.out.println("Desconectou");
         int indexToRemove = -1;
         for (int i = 0; i < this.connectionManager.getClientsList().size(); i++) {
             if (this.connectionManager.getClientsList().get(i).getAlias().equals(alias)) {
@@ -110,7 +122,7 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
         }
         if (indexToRemove > -1) {
             this.connectionManager.getClientsList().remove(indexToRemove);
-        }        
+        }
         this.onClientConnectionTCPStatusListener.onDisconnect(alias);
     }
 
@@ -126,31 +138,71 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
         while (true) {
             try {
                 Archive archive = this.getArchiveToTransfer();
-                File file = new File(archive.getPath());                
+                File file = new File(archive.getPath());
                 List<FTClient> clientsToWrite = this.connectionManager.getClientsList();
                 byte[] bytesToSend = getBytesFromFile(file);
+                System.out.println("Tamanho do arquivo a ser enviado: " + bytesToSend.length + " bytes");
                 ArchiveInfo archiveInfo = new ArchiveInfo();
                 archiveInfo.setArchiveName(archive.getName());
                 archiveInfo.setArchiveLength(bytesToSend.length);
-                archiveInfo.setFragmentsAmount(0);
-                for (FTClient ftc : clientsToWrite) {                    
+                archiveInfo.setFragmentsAmount(1);
+
+                if (bytesToSend.length > MAX_FILE_LENGTH_TO_SEND_WITHOUT_FRAGMENT) {
+                    System.out.println("Arquivo superior a " + MAX_FILE_LENGTH_TO_SEND_WITHOUT_FRAGMENT + " bytes");
+                    System.out.println("O envio do arquivo será fragmentado");                    
+                    int fragmentsSize;
+                    int fragmentLength = bytesToSend.length;
+                    
+                    for (fragmentsSize = 1; fragmentLength > MAX_FILE_LENGTH_TO_SEND_WITHOUT_FRAGMENT; fragmentsSize++) {
+                        fragmentLength = bytesToSend.length / fragmentsSize;
+                    }                    
+                    
+                    int lastFragmentLength = 0;
+                    if (fragmentsSize * fragmentLength > bytesToSend.length) {
+                        lastFragmentLength = bytesToSend.length % (fragmentsSize-1);
+                    }
+                    System.out.println("Quantidade de fragmentos: " + fragmentsSize);
+                    System.out.println("Tamanho de cada fragmento: " + fragmentLength);
+                    System.out.println("Tamanho do ultimo fragmento: " + lastFragmentLength);
+                    archiveInfo.setFragmentsAmount(fragmentsSize);
+                    archiveInfo.setFragmentLength(fragmentLength);
+                    archiveInfo.setLastFragmentLength(lastFragmentLength);                    
+                }                
+                for (FTClient ftc : clientsToWrite) {
                     WriteListener wl = (WriteListener) ftc.getWriteListener();
                     wl.write(getBytesFromObject(archiveInfo));
                     System.out.println("Esperando confirmação do cliente para enviar!");
                     this.setWaitingClientConfirmToSend(true);
-                    while (isWaitingClientConfirmToSend()) {}
-                    sleep(500);
-                    System.out.println("Tamanho do buffer/arquivo a ser enviado: " + bytesToSend.length);
-                    wl.write(bytesToSend);
+                    while (isWaitingClientConfirmToSend()) {
+                    }
                     System.out.println("Enviando o arquivo");
                     archive.setStatusTranfer(1);
                     transferStatusListener.onSending();
+                    if (archiveInfo.getFragmentsAmount() > 1) {
+                        for (int i = 0; i < archiveInfo.getFragmentsAmount(); i++) {
+                            System.out.println("Enviando " + (i + 1) + "º fragmento");
+                            if (i == archiveInfo.getFragmentsAmount() - 1 && archiveInfo.getLastFragmentLength() != 0) {
+                                wl.write(bytesToSend, i * archiveInfo.getFragmentLength(), archiveInfo.getLastFragmentLength());
+                            } else {
+                                wl.write(bytesToSend, i * archiveInfo.getFragmentLength(), archiveInfo.getFragmentLength());
+                            }
+                            System.out.println("Esperando cliente receber o fragmento");
+                            setWaitingClientReceiveFragment(true);
+                            while (isWaitingClientReceiveFragment()) {
+                            }
+                            System.out.println("Fragmento recebido");
+                        }
+                    } else {
+                        wl.write(bytesToSend);
+                    }
                     System.out.println("Esperando cliente receber e salvar o arquivo!");
                     this.setWaitingClientReceiveAll(true);
-                    while (isWaitingClientReceiveAll()) {}
+                    while (isWaitingClientReceiveAll()) {
+                    }
+                    System.out.println("Cliente recebeu o arquivo. Pronto para enviar outro");
                 }
                 archive.setStatusTranfer(2);
-                transferStatusListener.onSendComplete();                
+                transferStatusListener.onSendComplete();
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -158,9 +210,13 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
         }
     }
 
+    private double convertToMB(int valueInBytes) {
+        return (double) valueInBytes / (1024 * 1024);
+    }
+
     @Override
-    public void onObjectReceived(Object msg
-    ) {
+    public void onObjectReceived(Object msg) {
+        System.err.println(msg);
         if (msg instanceof String) {
             switch ((String) msg) {
                 case "cango":
@@ -168,6 +224,9 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
                     break;
                 case "sm":
                     this.setWaitingClientConfirmToSend(false);
+                    break;
+                case "smf":
+                    this.setWaitingClientReceiveFragment(false);
                     break;
                 default:
                     System.out.println("Mensagem desconhecida");
