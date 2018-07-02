@@ -74,6 +74,9 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
 
     private List<FTClient> clients;
     private List<Archive> files;
+    
+    private JButton button_requestFreeMemory;
+    private JLabel label_info;
 
     private TransferManager transferManager;
 
@@ -87,7 +90,7 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
         }
-        super.setLayout(new GridLayout(1, 2));
+        super.setLayout(new BorderLayout());
 
         this.transferManager = new TransferManager(this);
         this.transferManager.start();
@@ -151,10 +154,21 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
 
         panel_files.add(this.scroll_list_clients);
         panel_files.add(new DropPane());
-        panel_clients.add(this.scroll_list_files, BorderLayout.CENTER);
-
-        super.add(panel_files);
-        super.add(panel_clients);
+        panel_clients.add(this.scroll_list_files, BorderLayout.CENTER);        
+        
+        JPanel panel_clients_and_files = new JPanel(new GridLayout(1, 2));
+        panel_clients_and_files.add(panel_files);
+        panel_clients_and_files.add(panel_clients);
+        super.add(panel_clients_and_files, BorderLayout.CENTER);
+        
+        //JPanel panel_info = new JPanel(new BorderLayout(5, 5));
+        //panel_info.setBorder(new TitledBorder("Informações sobre o dispositivo"));
+        //label_info = new JLabel();
+        //button_requestFreeMemory = new JButton("Verificar espaço disponível no smartphone");
+        //panel_info.add(button_requestFreeMemory, BorderLayout.LINE_START);
+        //panel_info.add(label_info, BorderLayout.CENTER);
+        
+        //super.add(panel_info, BorderLayout.PAGE_END);
     }
 
     public static void main(String[] args) {

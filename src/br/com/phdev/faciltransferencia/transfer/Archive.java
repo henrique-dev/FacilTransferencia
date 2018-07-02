@@ -22,7 +22,7 @@ import java.io.Serializable;
  *
  * @author Paulo Henrique Gonçalves Bacelar
  */
-public class Archive implements Serializable {    
+public class Archive {    
 
     private String name;
     private String path;
@@ -66,6 +66,8 @@ public class Archive implements Serializable {
                 return "ENVIANDO... | " + this.name;
             case 2:
                 return "ENVIO COMPLETO! | " + this.name;
+            case 3:
+                return "FALHA NO ENVIO - ESPAÇO INSUFICIENTE! | " + this.name;
             default:
                 return "Erro no arquivo";
         }        
