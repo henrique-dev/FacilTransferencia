@@ -10,7 +10,7 @@ import br.com.phdev.faciltransferencia.connetion.intefaces.WriteListener;
 import br.com.phdev.faciltransferencia.gui.FTGui;
 import br.com.phdev.faciltransferencia.transfer.Archive;
 import br.com.phdev.faciltransferencia.transfer.FTClient;
-import br.com.phdev.faciltransferencia.transfer.SizeInfo;
+import br.com.phdev.faciltransferencia.transfer.ArchiveInfo;
 import br.com.phdev.faciltransferencia.trasnfer.interfaces.TransferStatusListener;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -38,10 +38,9 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
 
     private final Connection.OnClientConnectionTCPStatusListener onClientConnectionTCPStatusListener;
 
-    private boolean cantSend = false;
-    private boolean waitingClient = true;
-
-    private FTClient currentClient;
+    private boolean waitingClientConfirmToSend = false;
+    private boolean waitingClientReceiveAll = false;
+    private boolean noFilesToSend = false;
 
     public TransferManager(FTGui context) {
         this.transferStatusListener = (TransferStatusListener) context;
@@ -55,16 +54,40 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
         return this.connectionManager.getClientsList();
     }
 
-    synchronized public LinkedList<Archive> getArchivesList() {
+    public synchronized LinkedList<Archive> getArchivesList() {
         return this.archives;
     }
 
-    synchronized public void addArchiveForTransfer(Archive archive) {
-        notify();
+    public synchronized void addArchiveForTransfer(Archive archive) {
         getArchivesList().add(archive);
+        notify();
     }
 
-    synchronized public Archive getArchiveToTransfer() {
+    public synchronized boolean isWaitingClientConfirmToSend() {
+        return waitingClientConfirmToSend;
+    }
+
+    public synchronized void setWaitingClientConfirmToSend(boolean waitingClientConfirmToSend) {
+        this.waitingClientConfirmToSend = waitingClientConfirmToSend;
+    }
+
+    public synchronized boolean isWaitingClientReceiveAll() {
+        return waitingClientReceiveAll;
+    }
+
+    public synchronized void setWaitingClientReceiveAll(boolean waitingClientReceiveAll) {
+        this.waitingClientReceiveAll = waitingClientReceiveAll;
+    }
+
+    public synchronized boolean isNoFilesToSend() {
+        return noFilesToSend;
+    }
+
+    public synchronized void setNoFilesToSend(boolean noFilesToSend) {
+        this.noFilesToSend = noFilesToSend;
+    }        
+
+    private synchronized Archive getArchiveToTransfer() {        
         if (getArchivesList().isEmpty()) {
             try {
                 wait();
@@ -75,36 +98,9 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
         return getArchivesList().pop();
     }
 
-    synchronized void clientReady() {
-        notify();
-    }
-
-    synchronized void setWaitingClient(boolean waitingClient) {
-        this.waitingClient = waitingClient;
-        try {
-            wait();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    synchronized void canSend() {
-        notify();
-    }
-
-    synchronized private void setCantSend(boolean cantSend) {
-        this.cantSend = cantSend;
-        try {
-            wait();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public void onDisconnect(String alias) {
-        System.out.println("Desconectou");
-        System.out.println(connectionManager.getClientsList().size());
+        System.out.println("Desconectou");        
         int indexToRemove = -1;
         for (int i = 0; i < this.connectionManager.getClientsList().size(); i++) {
             if (this.connectionManager.getClientsList().get(i).getAlias().equals(alias)) {
@@ -115,7 +111,6 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
         if (indexToRemove > -1) {
             this.connectionManager.getClientsList().remove(indexToRemove);
         }        
-        System.out.println(connectionManager.getClientsList().size());
         this.onClientConnectionTCPStatusListener.onDisconnect(alias);
     }
 
@@ -131,16 +126,19 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
         while (true) {
             try {
                 Archive archive = this.getArchiveToTransfer();
-                File file = new File(archive.getPath());
-                archive.setBytes(getBytesFromFile(file));
+                File file = new File(archive.getPath());                
                 List<FTClient> clientsToWrite = this.connectionManager.getClientsList();
-                byte[] bytesToSend = getBytesFromObject(archive);
-                for (FTClient ftc : clientsToWrite) {
-                    this.currentClient = ftc;
+                byte[] bytesToSend = getBytesFromFile(file);
+                ArchiveInfo archiveInfo = new ArchiveInfo();
+                archiveInfo.setArchiveName(archive.getName());
+                archiveInfo.setArchiveLength(bytesToSend.length);
+                archiveInfo.setFragmentsAmount(0);
+                for (FTClient ftc : clientsToWrite) {                    
                     WriteListener wl = (WriteListener) ftc.getWriteListener();
-                    wl.write(getBytesFromObject(new SizeInfo(bytesToSend.length)));
+                    wl.write(getBytesFromObject(archiveInfo));
                     System.out.println("Esperando confirmação do cliente para enviar!");
-                    this.setWaitingClient(true);
+                    this.setWaitingClientConfirmToSend(true);
+                    while (isWaitingClientConfirmToSend()) {}
                     sleep(500);
                     System.out.println("Tamanho do buffer/arquivo a ser enviado: " + bytesToSend.length);
                     wl.write(bytesToSend);
@@ -148,11 +146,11 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
                     archive.setStatusTranfer(1);
                     transferStatusListener.onSending();
                     System.out.println("Esperando cliente receber e salvar o arquivo!");
-                    this.setCantSend(true);
+                    this.setWaitingClientReceiveAll(true);
+                    while (isWaitingClientReceiveAll()) {}
                 }
                 archive.setStatusTranfer(2);
-                transferStatusListener.onSendComplete();
-                archive.setBytes(null);
+                transferStatusListener.onSendComplete();                
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -166,10 +164,10 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
         if (msg instanceof String) {
             switch ((String) msg) {
                 case "cango":
-                    this.canSend();
+                    this.setWaitingClientReceiveAll(false);
                     break;
                 case "sm":
-                    clientReady();
+                    this.setWaitingClientConfirmToSend(false);
                     break;
                 default:
                     System.out.println("Mensagem desconhecida");

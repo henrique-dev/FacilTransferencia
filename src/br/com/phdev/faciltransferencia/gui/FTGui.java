@@ -86,7 +86,7 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
-        }       
+        }
         super.setLayout(new GridLayout(1, 2));
 
         this.transferManager = new TransferManager(this);
@@ -100,13 +100,13 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
     }
 
     private void initComponents() {
-        this.menu_bar = new JMenuBar();        
-        this.menu_ft = new JMenu("Mim2Mim");                        
-        this.menu_help = new JMenu("Ajuda");                               
+        this.menu_bar = new JMenuBar();
+        this.menu_ft = new JMenu("Mim2Mim");
+        this.menu_help = new JMenu("Ajuda");
         this.menu_bar.add(this.menu_ft);
         this.menu_bar.add(this.menu_help);
-                
-        super.setJMenuBar(this.menu_bar);        
+
+        super.setJMenuBar(this.menu_bar);
 
         JPanel panel_clients = new JPanel();
         panel_clients.setBorder(new TitledBorder("Arquivos"));
@@ -127,7 +127,7 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
                 return FTGui.this.clients.get(index);
             }
         });
-        this.scroll_list_clients = new JScrollPane();       
+        this.scroll_list_clients = new JScrollPane();
         this.scroll_list_clients.setViewportView(this.list_clients);
 
         this.list_files = new JList<>();
@@ -148,21 +148,28 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
         JPanel panel_files = new JPanel();
         panel_files.setBorder(new TitledBorder("Dispositivos conectados"));
         panel_files.setLayout(new GridLayout(2, 1));
-        
+
         panel_files.add(this.scroll_list_clients);
-        panel_files.add(new DropPane());        
-        panel_clients.add(this.scroll_list_files, BorderLayout.CENTER);        
-        
+        panel_files.add(new DropPane());
+        panel_clients.add(this.scroll_list_files, BorderLayout.CENTER);
+
         super.add(panel_files);
-        super.add(panel_clients);                
+        super.add(panel_clients);
     }
 
     public static void main(String[] args) {
-        new FTGui();        
+        new FTGui();
     }
 
-    @Override
-    public void onDisconnect(String alias) {        
+    private void updateFileList() {
+        Archive[] tmp = new Archive[this.files.size()];
+        for (int i = 0; i < tmp.length; i++) {
+            tmp[i] = this.files.get(i);
+        }
+        this.list_files.setListData(tmp);
+    }
+
+    private void updateClientList() {
         FTClient[] tmp = new FTClient[this.clients.size()];
         for (int i = 0; i < tmp.length; i++) {
             tmp[i] = this.clients.get(i);
@@ -171,30 +178,23 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
     }
 
     @Override
-    public void onConnect(String alias) {                
-        FTClient[] tmp = new FTClient[this.clients.size()];
-        for (int i = 0; i < tmp.length; i++) {
-            tmp[i] = this.clients.get(i);
-        }
-        this.list_clients.setListData(tmp);
+    public void onDisconnect(String alias) {
+        updateClientList();
+    }
+
+    @Override
+    public void onConnect(String alias) {
+        updateClientList();
     }
 
     @Override
     public void onSending() {
-        Archive[] tmp = new Archive[this.files.size()];
-        for (int i = 0; i < tmp.length; i++) {
-            tmp[i] = this.files.get(i);
-        }
-        this.list_files.setListData(tmp);
+        this.updateFileList();
     }
 
     @Override
     public void onSendComplete() {
-        Archive[] tmp = new Archive[this.files.size()];
-        for (int i = 0; i < tmp.length; i++) {
-            tmp[i] = this.files.get(i);
-        }
-        this.list_files.setListData(tmp);
+        this.updateFileList();
     }
 
     class DropPane extends JPanel {
@@ -270,13 +270,13 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
             Runnable run = new Runnable() {
                 @Override
                 public void run() {
-                    try {
+                    try {                        
                         for (Object obj : files) {
                             Archive archive = new Archive();
                             archive.setName(((File) obj).getName());
                             archive.setPath(((File) obj).getPath());
                             FTGui.this.files.add(archive);
-                            FTGui.this.list_files.updateUI();
+                            updateFileList();
                             FTGui.this.transferManager.addArchiveForTransfer(archive);
                         }
                     } catch (Exception e) {
