@@ -13,12 +13,11 @@ Obs.: Seu computador deve possuir o [java](https://java.com/pt_BR/download/) ins
 ### Funções atuais
 - [X] Transferência de arquivos para o smartphone.
 - [X] Pareamento automático entre smartphone e computador.
-- [X] Tamanho máximo do arquivo para envio: 30Mb.
+- [X] Tamanho máximo do arquivo para envio: ilimitado.
 
 ### Proximas funções
 - [ ] Recebimento de arquivos do smartphone.
 - [ ] Pareamente manual entre smartphone e computador.
-- [ ] Aumento do tamanho máximo de envio e recebimento de arquivos para 200Mb.
 - [ ] Transferência a mais de um dispositivo.
 
 ### Descrição
