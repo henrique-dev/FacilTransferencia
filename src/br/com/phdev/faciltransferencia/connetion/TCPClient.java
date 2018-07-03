@@ -65,8 +65,8 @@ public class TCPClient extends Thread implements WriteListener {
     public void run() {
         try {
 
-            System.out.println("Tentando contanto com o smartphone via TCP...");
-            this.clientTcpSocket = new Socket(this.address.getHostAddress(), SERVER_TRANSFER_PORT);
+            System.out.println("Tentando contanto com o smartphone via TCP...");            
+            this.clientTcpSocket = new Socket(this.address.getHostAddress(), SERVER_TRANSFER_PORT);            
             System.out.println("Conectado ao smartphone");
             if (this.onClientConnectionTCPStatusListener != null) {
                 this.onClientConnectionTCPStatusListener.onConnect(alias);
