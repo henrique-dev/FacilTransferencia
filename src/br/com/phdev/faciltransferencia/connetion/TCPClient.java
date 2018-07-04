@@ -31,6 +31,8 @@ public class TCPClient extends Thread implements WriteListener {
     private OnReadListener readListener;
     private Connection.OnClientConnectionTCPStatusListener onClientConnectionTCPStatusListener;
 
+    private boolean running;
+
     public TCPClient(InetAddress address, String alias) {
         this.address = address;
         this.alias = alias;
@@ -61,29 +63,39 @@ public class TCPClient extends Thread implements WriteListener {
         }
     }
 
+    public boolean isRunning() {
+        return running;
+    }
+
+    public void setRunning(boolean running) {
+        this.running = running;
+    }
+
     @Override
     public void run() {
         try {
 
-            System.out.println("Tentando contanto com o smartphone via TCP...");            
-            this.clientTcpSocket = new Socket(this.address.getHostAddress(), SERVER_TRANSFER_PORT);            
+            System.out.println("Tentando contanto com o smartphone via TCP...");
+            this.clientTcpSocket = new Socket(this.address.getHostAddress(), SERVER_TRANSFER_PORT);
             System.out.println("Conectado ao smartphone");
-            if (this.onClientConnectionTCPStatusListener != null) {
-                this.onClientConnectionTCPStatusListener.onConnect(alias);
-            } else {
-                throw new RuntimeException("onClientConnectionTCPStatusListener não registrado");
-            }
 
             this.outputStream = this.clientTcpSocket.getOutputStream();
             this.inputStream = this.clientTcpSocket.getInputStream();
 
-            bytes = new byte[30];
+            if (this.onClientConnectionTCPStatusListener != null) {
+                this.onClientConnectionTCPStatusListener.onConnect(TCPClient.this, alias);
+            } else {
+                throw new RuntimeException("onClientConnectionTCPStatusListener não registrado");
+            }
 
-            while (true) {
+            bytes = new byte[50];
+
+            this.running = true;
+            while (this.running) {
                 try {
                     int bytesReaded = inputStream.read(bytes);
                     if (bytesReaded == -1) {
-                        this.onClientConnectionTCPStatusListener.onDisconnect(this.alias);                                      
+                        this.onClientConnectionTCPStatusListener.onDisconnect(this.alias);
                         break;
                     }
                     this.readListener.onRead(bytes, bytesReaded);
@@ -106,17 +118,17 @@ public class TCPClient extends Thread implements WriteListener {
 
     @Override
     public void write(byte[] bytes) {
-        try {            
+        try {
             this.outputStream.write(bytes);
             this.outputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    
+
     @Override
     public void write(byte[] bytes, int off, int length) {
-        try {            
+        try {
             this.outputStream.write(bytes, off, length);
             this.outputStream.flush();
         } catch (IOException e) {

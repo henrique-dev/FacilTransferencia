@@ -16,7 +16,7 @@ public interface Connection {
     public interface OnClientConnectionTCPStatusListener {
         
         void onDisconnect(String alias);
-        void onConnect(String alias);
+        void onConnect(WriteListener writeListener, String alias);
         
     }
     

@@ -6,6 +6,7 @@
 package br.com.phdev.faciltransferencia.gui;
 
 import br.com.phdev.faciltransferencia.connetion.intefaces.Connection;
+import br.com.phdev.faciltransferencia.connetion.intefaces.WriteListener;
 import br.com.phdev.faciltransferencia.transfer.Archive;
 import br.com.phdev.faciltransferencia.managers.TransferManager;
 import br.com.phdev.faciltransferencia.transfer.FTClient;
@@ -204,7 +205,7 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
     }
 
     @Override
-    public void onConnect(String alias) {
+    public void onConnect(WriteListener wl, String alias) {
         updateClientList();
     }
 
@@ -299,6 +300,7 @@ public class FTGui extends JFrame implements Connection.OnClientConnectionTCPSta
                             archive.setName(((File) obj).getName());
                             archive.setPath(((File) obj).getPath());
                             FTGui.this.files.add(archive);
+                            System.out.println(((File)obj).getPath());
                             updateFileList();
                             FTGui.this.transferManager.addArchiveForTransfer(archive);
                         }

@@ -25,6 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 import br.com.phdev.faciltransferencia.trasnfer.interfaces.OnObjectReceivedListener;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import javax.swing.JOptionPane;
 
 /**
@@ -33,6 +34,7 @@ import javax.swing.JOptionPane;
  */
 public class TransferManager extends Thread implements OnObjectReceivedListener, Connection.OnClientConnectionTCPStatusListener {
 
+    public static final int CURRENT_ID_VERSION = 6;
     private final int MAX_FILE_LENGTH_TO_SEND_WITHOUT_FRAGMENT = 10485760;
 
     private final ConnectionManager connectionManager;
@@ -136,9 +138,9 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
     }
 
     @Override
-    public void onConnect(String alias) {
-        System.out.println("Conectou");
-        this.onClientConnectionTCPStatusListener.onConnect(alias);
+    public void onConnect(WriteListener wl, String alias) {
+        System.out.println("Conectou");        
+        this.onClientConnectionTCPStatusListener.onConnect(null, alias);
     }
 
     @Override
@@ -148,77 +150,86 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
                 System.out.println("Esperando arquivos serem inseridos para serem enviados");
                 Archive archive = this.getArchiveToTransfer();
                 System.out.println("Arquivo inserido");
-                File file = new File(archive.getPath());                
-                List<FTClient> clientsToWrite = this.connectionManager.getClientsList();
-                byte[] bytesToSend = getBytesFromFile(file);
-                System.out.println("Tamanho do arquivo a ser enviado: " + bytesToSend.length + " bytes");
-                ArchiveInfo archiveInfo = new ArchiveInfo();
-                archiveInfo.setArchiveName(archive.getName());
-                archiveInfo.setArchiveLength(bytesToSend.length);
-                archiveInfo.setFragmentsAmount(1);
 
-                if (bytesToSend.length > MAX_FILE_LENGTH_TO_SEND_WITHOUT_FRAGMENT) {
-                    System.out.println("Arquivo superior a " + MAX_FILE_LENGTH_TO_SEND_WITHOUT_FRAGMENT + " bytes");
-                    System.out.println("O envio do arquivo será fragmentado");
-                    int fragmentsSize;
-                    int fragmentLength = bytesToSend.length;
+                List<Archive> archivesList = checkIfArchiveIsDirectory(new File(archive.getPath()));
 
-                    for (fragmentsSize = 1; fragmentLength > MAX_FILE_LENGTH_TO_SEND_WITHOUT_FRAGMENT; fragmentsSize++) {
-                        fragmentLength = bytesToSend.length / fragmentsSize;
+                for (Archive archiveToTransfer : archivesList) {
+                    System.out.println("Preparando arquivo...");
+                    File file = new File(archiveToTransfer.getPath());
+
+                    List<FTClient> clientsToWrite = this.connectionManager.getClientsList();
+                    byte[] bytesToSend = getBytesFromFile(file);
+                    System.out.println("Tamanho do arquivo a ser enviado: " + bytesToSend.length + " bytes");
+                    ArchiveInfo archiveInfo = new ArchiveInfo();                    
+                    archiveInfo.setArchiveName(archiveToTransfer.getName());
+                    archiveInfo.setLocalPath(archiveToTransfer.getLocalPath());
+                    archiveInfo.setMasterPath(archiveToTransfer.getMasterPath());
+                    archiveInfo.setArchiveLength(bytesToSend.length);                    
+                    archiveInfo.setFragmentsAmount(1);
+
+                    if (bytesToSend.length > MAX_FILE_LENGTH_TO_SEND_WITHOUT_FRAGMENT) {
+                        System.out.println("Arquivo superior a " + MAX_FILE_LENGTH_TO_SEND_WITHOUT_FRAGMENT + " bytes");
+                        System.out.println("O envio do arquivo será fragmentado");
+                        int fragmentsSize;
+                        int fragmentLength = bytesToSend.length;
+
+                        for (fragmentsSize = 1; fragmentLength > MAX_FILE_LENGTH_TO_SEND_WITHOUT_FRAGMENT; fragmentsSize++) {
+                            fragmentLength = bytesToSend.length / fragmentsSize;
+                        }
+
+                        int lastFragmentLength = 0;
+                        if (fragmentsSize * fragmentLength > bytesToSend.length) {
+                            lastFragmentLength = bytesToSend.length % (fragmentsSize - 1);
+                        }
+                        System.out.println("Quantidade de fragmentos: " + fragmentsSize);
+                        System.out.println("Tamanho de cada fragmento: " + fragmentLength);
+                        System.out.println("Tamanho do ultimo fragmento: " + lastFragmentLength);
+                        archiveInfo.setFragmentsAmount(fragmentsSize);
+                        archiveInfo.setFragmentLength(fragmentLength);
+                        archiveInfo.setLastFragmentLength(lastFragmentLength);
                     }
-
-                    int lastFragmentLength = 0;
-                    if (fragmentsSize * fragmentLength > bytesToSend.length) {
-                        lastFragmentLength = bytesToSend.length % (fragmentsSize - 1);
-                    }
-                    System.out.println("Quantidade de fragmentos: " + fragmentsSize);
-                    System.out.println("Tamanho de cada fragmento: " + fragmentLength);
-                    System.out.println("Tamanho do ultimo fragmento: " + lastFragmentLength);
-                    archiveInfo.setFragmentsAmount(fragmentsSize);
-                    archiveInfo.setFragmentLength(fragmentLength);
-                    archiveInfo.setLastFragmentLength(lastFragmentLength);
-                }
-                for (FTClient ftc : clientsToWrite) {
-                    WriteListener wl = (WriteListener) ftc.getWriteListener();
-                    wl.write(getBytesFromObject(archiveInfo));
-                    System.out.println("Esperando confirmação do cliente para enviar!");
-                    this.setWaitingClientConfirmToSend(true);
-                    while (isWaitingClientConfirmToSend()) {
+                    for (FTClient ftc : clientsToWrite) {
+                        WriteListener wl = (WriteListener) ftc.getWriteListener();
+                        wl.write(getBytesFromObject(archiveInfo));
+                        System.out.println("Esperando confirmação do cliente para enviar!");
+                        this.setWaitingClientConfirmToSend(true);
+                        while (isWaitingClientConfirmToSend()) {
+                            if (errorOnTransfer) {
+                                break;
+                            }
+                        }
                         if (errorOnTransfer) {
-                            break;
+                            archive.setStatusTranfer(3);
+                            setWaitingClientConfirmToSend(false);
+                            continue;
                         }
-                    }
-                    if (errorOnTransfer) {
-                        archive.setStatusTranfer(3);
-                        setWaitingClientConfirmToSend(false);
-                        continue;
-                    }
-                    System.out.println("Enviando o arquivo");
-                    archive.setStatusTranfer(1);
-                    transferStatusListener.onSending();
-                    if (archiveInfo.getFragmentsAmount() > 1) {
-                        for (int i = 0; i < archiveInfo.getFragmentsAmount(); i++) {
-                            System.out.println("Enviando " + (i + 1) + "º fragmento");
-                            if (i == archiveInfo.getFragmentsAmount() - 1 && archiveInfo.getLastFragmentLength() != 0) {
-                                wl.write(bytesToSend, i * archiveInfo.getFragmentLength(), archiveInfo.getLastFragmentLength());
-                            } else {
-                                wl.write(bytesToSend, i * archiveInfo.getFragmentLength(), archiveInfo.getFragmentLength());
+                        System.out.println("Enviando o arquivo");
+                        archive.setStatusTranfer(1);
+                        transferStatusListener.onSending();
+                        if (archiveInfo.getFragmentsAmount() > 1) {
+                            for (int i = 0; i < archiveInfo.getFragmentsAmount(); i++) {
+                                System.out.println("Enviando " + (i + 1) + "º fragmento");
+                                if (i == archiveInfo.getFragmentsAmount() - 1 && archiveInfo.getLastFragmentLength() != 0) {
+                                    wl.write(bytesToSend, i * archiveInfo.getFragmentLength(), archiveInfo.getLastFragmentLength());
+                                } else {
+                                    wl.write(bytesToSend, i * archiveInfo.getFragmentLength(), archiveInfo.getFragmentLength());
+                                }
+                                System.out.println("Esperando cliente receber o fragmento");
+                                setWaitingClientReceiveFragment(true);
+                                while (isWaitingClientReceiveFragment()) {
+                                }
+                                System.out.println("Fragmento recebido");
                             }
-                            System.out.println("Esperando cliente receber o fragmento");
-                            setWaitingClientReceiveFragment(true);
-                            while (isWaitingClientReceiveFragment()) {
-                            }
-                            System.out.println("Fragmento recebido");
+                        } else {
+                            wl.write(bytesToSend);
                         }
-                    } else {
-                        wl.write(bytesToSend);
+                        System.out.println("Esperando cliente receber e salvar o arquivo!");
+                        this.setWaitingClientReceiveAll(true);
+                        while (isWaitingClientReceiveAll()) {
+                        }
+                        System.out.println("Cliente recebeu o arquivo. Pronto para enviar outro");
+                        break;
                     }
-                    System.out.println("Esperando cliente receber e salvar o arquivo!");
-                    this.setWaitingClientReceiveAll(true);
-                    while (isWaitingClientReceiveAll()) {
-                    }
-                    System.out.println("Cliente recebeu o arquivo. Pronto para enviar outro");
-                    break;
                 }
                 if (!errorOnTransfer) {
                     archive.setStatusTranfer(2);
@@ -247,7 +258,7 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
                     break;
                 case "nospace":
                     errorOnTransfer = true;
-                    break;
+                    break;                
                 default:
                     System.out.println("Mensagem desconhecida");
                     break;
@@ -255,7 +266,7 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
         }
     }
 
-    public static byte[] getBytesFromObject(Object obj) {
+    private byte[] getBytesFromObject(Object obj) {
         if (obj == null) {
             return null;
         }
@@ -285,7 +296,7 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
         }
     }
 
-    public byte[] getBytesFromFile(File file) {
+    private byte[] getBytesFromFile(File file) {
         byte[] bytes = new byte[(int) file.length()];
         try (FileInputStream fis = new FileInputStream(file)) {
             fis.read(bytes);
@@ -293,6 +304,46 @@ public class TransferManager extends Thread implements OnObjectReceivedListener,
             e.printStackTrace();
         }
         return bytes;
+    }
+
+    private List<Archive> checkIfArchiveIsDirectory(File source) {
+        List<Archive> archivesList = new ArrayList<>();
+        if (source.isFile()) {
+            Archive archive = new Archive();
+            archive.setName(source.getName());
+            archive.setPath(source.getPath());
+            archive.setLocalPath(null);
+            archive.setMasterPath(null);
+            archivesList.add(archive);
+        } else if (source.isDirectory()) {
+            archivesList.addAll(getArchivesFromDirectory(source, source.getName(), source.getName()));
+        }
+        return archivesList;
+    }
+
+    private List<Archive> getArchivesFromDirectory(File source, final String localPath, final String masterPath) {
+        List<Archive> archivesList = new ArrayList<>();
+        File[] filesInSource = source.listFiles();
+        for (File fileDiscovered : filesInSource) {
+            if (fileDiscovered.isFile()) {
+                Archive archive = new Archive();
+                archive.setName(fileDiscovered.getName());
+                archive.setPath(fileDiscovered.getPath());
+                archive.setLocalPath(localPath);
+                archive.setMasterPath(masterPath);
+                System.out.println("LocalPath: " + localPath);
+                archivesList.add(archive);
+            } else if (fileDiscovered.isDirectory()) {
+                String newLocalPath;
+                if (!localPath.equals(source.getName())) {
+                    newLocalPath = localPath + "/" + fileDiscovered.getName();
+                } else {
+                    newLocalPath = source.getName() + "/" + fileDiscovered.getName();
+                }
+                archivesList.addAll(getArchivesFromDirectory(fileDiscovered, newLocalPath, masterPath));
+            }
+        }
+        return archivesList;
     }
 
 }

@@ -14,6 +14,8 @@ import java.io.Serializable;
 public class ArchiveInfo implements Serializable{        
     
     private String archiveName;
+    private String masterPath;
+    private String localPath;
     private long archiveLength;
     private int fragmentsAmount;
     private int fragmentLength;
@@ -57,6 +59,22 @@ public class ArchiveInfo implements Serializable{
 
     public void setLastFragmentLength(int lastFragmentLength) {
         this.lastFragmentLength = lastFragmentLength;
+    }     
+
+    public String getLocalPath() {
+        return localPath;
+    }
+
+    public void setLocalPath(String localPath) {
+        this.localPath = localPath;
     }        
+
+    public String getMasterPath() {
+        return masterPath;
+    }
+
+    public void setMasterPath(String masterPath) {
+        this.masterPath = masterPath;
+    }       
             
 }
