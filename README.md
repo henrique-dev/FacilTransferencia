@@ -1,7 +1,4 @@
 # Mim2Mim - Desktop (m2m)
-
-Este projeto se encontra em atualização
-
 ### Download
 
 Para baixar o último lançamento da aplicação, [clique aqui](https://github.com/henrique-dev/m2m-Desktop/raw/master/dist/FacilTransferencia.jar).
