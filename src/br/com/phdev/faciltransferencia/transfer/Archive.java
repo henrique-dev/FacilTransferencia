@@ -26,6 +26,8 @@ public class Archive {
 
     private String name;
     private String path;
+    private String masterPath;
+    private String localPath;
     private int statusTransfer = 0;
     private byte[] bytes;
 
@@ -56,6 +58,30 @@ public class Archive {
     public void setStatusTranfer(int status) {
         this.statusTransfer = status;
     }
+
+    public String getLocalPath() {
+        return localPath;
+    }
+
+    public void setLocalPath(String localPath) {
+        this.localPath = localPath;
+    }
+
+    public int getStatusTransfer() {
+        return statusTransfer;
+    }
+
+    public void setStatusTransfer(int statusTransfer) {
+        this.statusTransfer = statusTransfer;
+    }        
+
+    public String getMasterPath() {
+        return masterPath;
+    }
+
+    public void setMasterPath(String masterPath) {
+        this.masterPath = masterPath;
+    }        
 
     @Override
     public String toString() {

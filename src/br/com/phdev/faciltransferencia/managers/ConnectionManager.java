@@ -45,12 +45,6 @@ public class ConnectionManager implements OnReadListener, Connection.OnClientCon
     public void startBroadcastServer() {
         this.broadcastServer.start();
     }
-    /*
-    public void removeClient() {
-        this.clients.get(0).getTcpConnection().close();
-        this.clients.clear();
-        this.onClientConnectionTCPStatusListener.onDisconnect();
-    } */   
 
     @Override
     public void onClientFound(FTClient client) {       
@@ -60,9 +54,9 @@ public class ConnectionManager implements OnReadListener, Connection.OnClientCon
             }
         }
         System.out.println("Cliente adicionado");
-        client.getTcpConnection().setOnClientConnectionTCPStatusListener(this.onClientConnectionTCPStatusListener);
-        client.getTcpConnection().setOnReadListener(this);
         client.getTcpConnection().start();        
+        client.getTcpConnection().setOnClientConnectionTCPStatusListener(this.onClientConnectionTCPStatusListener);
+        client.getTcpConnection().setOnReadListener(this);        
         this.clients.add(client);
     }    
 
