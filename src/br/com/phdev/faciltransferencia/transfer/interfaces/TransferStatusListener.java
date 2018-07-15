@@ -3,14 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package br.com.phdev.faciltransferencia.trasnfer.interfaces;
+package br.com.phdev.faciltransferencia.transfer.interfaces;
 
 /**
  *
  * @author Paulo Henrique Gonçalves Bacelar
  */
-public interface OnObjectReceivedListener {
+public interface TransferStatusListener {
     
-    void onObjectReceived(Object obj);
+    void onSending();
+    void onSendComplete();
     
 }

@@ -49,7 +49,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import br.com.phdev.faciltransferencia.trasnfer.interfaces.TransferStatusListener;
+import br.com.phdev.faciltransferencia.transfer.interfaces.TransferStatusListener;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

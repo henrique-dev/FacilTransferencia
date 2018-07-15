@@ -16,7 +16,7 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;;
 import java.util.ArrayList;
 import java.util.List;
-import br.com.phdev.faciltransferencia.trasnfer.interfaces.OnObjectReceivedListener;
+import br.com.phdev.faciltransferencia.transfer.interfaces.OnObjectReceivedListener;
 
 /**
  *
